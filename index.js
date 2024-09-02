@@ -49,28 +49,32 @@ let shortEntry = 0;
 app.post('/api/shorturl', (req, res) => {
   console.log(req.body.url);
 
-  const newUrl = new URL(req.body.url);
+  try {
 
-  dns.lookup(newUrl.hostname, options, (err, address) => {
+    const newUrl = new URL(req.body.url);
+    
+    dns.lookup(newUrl.hostname, options, (err, address) => {
     if (err) {
       console.log('error', err);
     } else {
       URLModel.findOne({ 'original_url': req.body.url }).then(value => {
         if (!value) {
-
           let urlToShort = URLModel({ 'original_url': req.body.url, 'short_url': shortEntry++ });
           urlToShort.save().then(value => {
             res.json({
               'original_url': value.original_url,
               'short_url': value.short_url
             });
-
+            
           });
         }
       });
     }
   });
-
+} catch(error) {
+  res.json({'error': 'Invalid URL'});
+}
+  
 });
 
 app.get('/api/shorturl/:url_id', (req, res) => {
@@ -85,7 +89,7 @@ app.get('/api/shorturl/:url_id', (req, res) => {
 
       const originalUrl = value['original_url'];
       console.log('original', originalUrl);
-      
+
       res.redirect(originalUrl);
 
     }
